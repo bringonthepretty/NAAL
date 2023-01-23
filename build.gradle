@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'com.wah'
+version '0.1-BETA'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'commons-io:commons-io:2.11.0'
+    implementation 'org.apache.commons:commons-lang3:3.12.0'
+}
+
+application {
+    mainClass = 'com.wah.naal.Application'
+}
+
+jar {
+    manifest {
+        attributes(
+                'Main-Class': 'com.wah.naal.Application'
+        )
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    } {
+        exclude "META-INF/*.SF"
+        exclude "META-INF/*.DSA"
+        exclude "META-INF/*.RSA"
+        exclude "META-INF/*.txt"
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
