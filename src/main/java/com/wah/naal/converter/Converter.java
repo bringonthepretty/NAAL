@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 public class Converter {
 
     private static final Double DEGREE_TO_AUTOMATA_UNITS_RATIO = 0.0174565566508981D;
-    private static final Double DEGREE_360_TO_AUTOMATA_UNITS_RATIO = 6.284360394323324D;
+    private static final Double DEGREES_360_TO_AUTOMATA_UNITS_RATIO = 6.284360394323324D;
 
     //05 04 12 20
     //value from pl0100_0006.mot, seems to be same to some files, purpose is unknown
@@ -34,6 +34,11 @@ public class Converter {
     //00 00
     //value from pl0100_0006.mot, seems to be same to some files, purpose is unknown
     private static final Integer DEFAULT_RECORD_HEADER_UNKNOWN = 0;
+
+    private static final Integer VALUE_TYPE_3_MAX_NUMBER = 255;
+    private static final Integer VALUE_TYPE_2_MAX_NUMBER = 65535;
+
+    private static final Integer DEGREES_360 = 360;
 
     private static final List<Integer> allowedBones = new ArrayList<>();
 
@@ -197,9 +202,9 @@ public class Converter {
         recordRotationY.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
         recordRotationZ.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
 
-        Value valueX = setValueToRecord(getJointRotationAxisData(joint, 0));
-        Value valueY = setValueToRecord(getJointRotationAxisData(joint, 1));
-        Value valueZ = setValueToRecord(getJointRotationAxisData(joint, 2));
+        Value valueX = generateValue(getJointRotationAxisData(joint, 0));
+        Value valueY = generateValue(getJointRotationAxisData(joint, 1));
+        Value valueZ = generateValue(getJointRotationAxisData(joint, 2));
 
         recordRotationX.setValue(valueX);
         recordRotationY.setValue(valueY);
@@ -233,7 +238,12 @@ public class Converter {
                 .collect(Collectors.toCollection(ArrayList::new));
     }
 
-    private Value setValueToRecord(List<Float> data) { //todo implement clever value type choose
+    private Value generateValue(List<Float> data) { //todo implement clever value type choose
+
+        if (data.stream().allMatch(value -> value == 0f)) {
+            return new Value0(0f);
+        }
+
         Float maxDegreeNormalized;
         Float minDegree = data.stream().min(Float::compareTo).orElse(0f);
         Float valueDelta;
@@ -248,13 +258,13 @@ public class Converter {
         }
 
         maxDegreeNormalized = data.stream().max(Float::compareTo).orElse(0f);
-        valueDelta = (float) (maxDegreeNormalized * DEGREE_TO_AUTOMATA_UNITS_RATIO / 255);
+        valueDelta = (float) (maxDegreeNormalized * DEGREE_TO_AUTOMATA_UNITS_RATIO / VALUE_TYPE_3_MAX_NUMBER);
         value3.setValueDelta(valueDelta);
-        Float degreeToByteNumber = 255 / maxDegreeNormalized;
+        Float degreeToByteNumber = VALUE_TYPE_3_MAX_NUMBER / maxDegreeNormalized;
 
         value3.setEntries(data.stream()
                 .map(frameDegree -> {
-                    int value = (int)((frameDegree % 360) * degreeToByteNumber);
+                    int value = (int)((frameDegree % DEGREES_360) * degreeToByteNumber);
                     if(value == Integer.MAX_VALUE) {
                         value = 0;
                     }
