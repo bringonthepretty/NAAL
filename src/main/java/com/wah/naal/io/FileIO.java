@@ -129,6 +129,7 @@ public class FileIO {
     /**
      * Saves motion to application's run directory
      * @param motion motion to be saved
+     * @param fileName name of file
      */
     public void saveMotion(Motion motion, String fileName) {
         String path = getCurrentPath() + "mot";
