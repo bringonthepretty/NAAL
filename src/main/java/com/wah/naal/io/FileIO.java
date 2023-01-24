@@ -71,7 +71,7 @@ public class FileIO {
      * @return all motions files from application's run directory
      */
     public List<List<Byte>> loadAllMotions() {
-        String path = getCurrentPath() + "mot";
+        String path = getCurrentPath();
         return loadAllMotions(path);
     }
 
@@ -102,7 +102,7 @@ public class FileIO {
      * @return all motions files from application's run directory
      */
     public Map<String, String> loadAllBvh() {
-        String path = getCurrentPath() + "bvh";
+        String path = getCurrentPath();
         return loadAllBvh(path);
     }
 
@@ -112,7 +112,7 @@ public class FileIO {
      */
     public Map<Integer, Integer> loadBonesMap() {
         Map<Integer, Integer> result = new HashMap<>();
-        File mapFile = new File(getCurrentPath() + "map/map.txt");
+        File mapFile = new File(getCurrentPath() + "map.txt");
         try {
             FileUtils.readLines(mapFile, StandardCharsets.UTF_8).forEach(line -> {
                 String[] data = line.split(": ");
@@ -132,7 +132,7 @@ public class FileIO {
      * @param fileName name of file
      */
     public void saveMotion(Motion motion, String fileName) {
-        String path = getCurrentPath() + "mot";
+        String path = getCurrentPath();
 
         try {
             File directory = new File(path);
@@ -141,7 +141,7 @@ public class FileIO {
                 directory.mkdirs();
             }
 
-            File file = new File(path + "/" + fileName.replaceAll("\\..*", "") + ".mot"); //todo regex is questionable
+            File file = new File(path + fileName.replaceAll("\\..*", "") + ".mot"); //todo regex is questionable
             FileUtils.writeByteArrayToFile(file, motionFileGenerator.generateAsByteArray(motion));
         } catch (IOException e) {
             System.err.println(e.getMessage());
