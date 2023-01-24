@@ -76,7 +76,7 @@ public class FileIO {
     }
 
     /**
-     * Reads all bvh files from provided directory as string
+     * Reads all bvh files from provided directory as map where key is file name and value is file data
      * @return all motions files from application's run directory
      */
     public Map<String, String> loadAllBvh(String path) {
