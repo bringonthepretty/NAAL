@@ -10,10 +10,11 @@ public class Application {
 
     public static Converter converter = Converter.getInstance();
     public static FileIO fileIO = FileIO.getInstance();
+    public static BvhBuilder bvhBuilder = BvhBuilder.getInstance();
 
     public static void main(String[] args) {
         fileIO.loadAllBvh().forEach((name, data) -> {
-            Bvh bvh = BvhBuilder.getInstance().build(data, name);
+            Bvh bvh = bvhBuilder.build(data, name);
             Motion motion = converter.convert(bvh);
             fileIO.saveMotion(motion, name);
         });
