@@ -5,11 +5,12 @@ import com.wah.naal.model.bvhfile.bvh.Bvh;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * This class represent {@link  Bvh}'s joint
  */
-public class Joint {
+public class Joint implements Cloneable{
     private String name;
 
     private Float offsetX;
@@ -76,6 +77,57 @@ public class Joint {
 
     public void setChildren(List<Joint> children) {
         this.children = children;
+    }
+
+    @Override
+    public Joint clone() {
+        Joint clone = new Joint();
+
+        clone.setName(name);
+
+        clone.setOffsetX(offsetX);
+        clone.setOffsetY(offsetY);
+        clone.setOffsetZ(offsetZ);
+
+        List<Joint> clonedChildren = new ArrayList<>();
+
+        children.forEach(child -> clonedChildren.add(child.clone()));
+
+        clone.setChildren(clonedChildren);
+
+        List<FrameData> clonedFrameData = new ArrayList<>();
+
+        frameData.forEach(entry -> clonedFrameData.add(entry.clone()));
+
+        clone.setFrameData(clonedFrameData);
+
+        return clone;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Joint joint = (Joint) o;
+
+        if (!Objects.equals(name, joint.name)) return false;
+        if (!Objects.equals(offsetX, joint.offsetX)) return false;
+        if (!Objects.equals(offsetY, joint.offsetY)) return false;
+        if (!Objects.equals(offsetZ, joint.offsetZ)) return false;
+        if (!Objects.equals(frameData, joint.frameData)) return false;
+        return Objects.equals(children, joint.children);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (offsetX != null ? offsetX.hashCode() : 0);
+        result = 31 * result + (offsetY != null ? offsetY.hashCode() : 0);
+        result = 31 * result + (offsetZ != null ? offsetZ.hashCode() : 0);
+        result = 31 * result + (frameData != null ? frameData.hashCode() : 0);
+        result = 31 * result + (children != null ? children.hashCode() : 0);
+        return result;
     }
 
     @Override

@@ -2,10 +2,12 @@ package com.wah.naal.model.bvhfile.framedata;
 
 import com.wah.naal.model.bvhfile.joint.Joint;
 
+import java.util.Objects;
+
 /**
  * This class represents data for one frame for {@link Joint}
  */
-public class FrameData {
+public class FrameData implements Cloneable{
     private Float positionX;
     private Float positionY;
     private Float positionZ;
@@ -60,6 +62,47 @@ public class FrameData {
 
     public void setRotationZ(Float rotationZ) {
         this.rotationZ = rotationZ;
+    }
+
+    @Override
+    public FrameData clone() {
+        FrameData clone = new FrameData();
+
+        clone.setPositionX(positionX);
+        clone.setPositionY(positionY);
+        clone.setPositionZ(positionZ);
+
+        clone.setRotationX(rotationX);
+        clone.setRotationY(rotationY);
+        clone.setRotationZ(rotationZ);
+
+        return clone;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        FrameData frameData = (FrameData) o;
+
+        if (!Objects.equals(positionX, frameData.positionX)) return false;
+        if (!Objects.equals(positionY, frameData.positionY)) return false;
+        if (!Objects.equals(positionZ, frameData.positionZ)) return false;
+        if (!Objects.equals(rotationX, frameData.rotationX)) return false;
+        if (!Objects.equals(rotationY, frameData.rotationY)) return false;
+        return Objects.equals(rotationZ, frameData.rotationZ);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = positionX != null ? positionX.hashCode() : 0;
+        result = 31 * result + (positionY != null ? positionY.hashCode() : 0);
+        result = 31 * result + (positionZ != null ? positionZ.hashCode() : 0);
+        result = 31 * result + (rotationX != null ? rotationX.hashCode() : 0);
+        result = 31 * result + (rotationY != null ? rotationY.hashCode() : 0);
+        result = 31 * result + (rotationZ != null ? rotationZ.hashCode() : 0);
+        return result;
     }
 
     @Override
