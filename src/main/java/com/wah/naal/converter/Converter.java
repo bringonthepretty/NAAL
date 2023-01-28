@@ -8,6 +8,10 @@ import com.wah.naal.model.motionfile.record.Record;
 import com.wah.naal.model.motionfile.value.api.Value;
 import com.wah.naal.model.motionfile.value.impl.Value0;
 import com.wah.naal.model.motionfile.value.impl.Value3;
+import org.apache.commons.math3.geometry.euclidean.threed.CardanEulerSingularityException;
+import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
+import org.apache.commons.math3.geometry.euclidean.threed.RotationConvention;
+import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -25,6 +29,9 @@ public class Converter {
     private static final Double METER_TO_AUTOMATA_POSITION_UNITS_RATIO = 1d;
 
     private static final Float Y_OFFSET = 1.016f;
+
+    private static final Float MAX_2_BYTE_FLOAT_VALUE = 511.9999F;
+    private static final Float MIN_2_BYTE_FLOAT_VALUE = 1E-14F;
 
     //05 04 12 20
     //value from pl0100_0006.mot, seems to be same to some files, purpose is unknown
@@ -86,8 +93,18 @@ public class Converter {
      */
     public Motion convert(Bvh source) {
         Motion result = new Motion();
-        result.setRecords(getRecords(source));
-        setMotionHeaderValues(result, source);
+        Bvh clone = source.clone();
+        convertBvhRotationOrderFromZXYToXYZ(clone);
+        Joint before = source.getAllJointsAsList().stream().filter(entry -> entry.getName().equals("bone125")).findFirst().get();
+        Joint after = clone.getAllJointsAsList().stream().filter(entry -> entry.getName().equals("bone125")).findFirst().get();
+        before.getFrameData().forEach(System.out::println);
+        System.out.println("===================");
+        after.getFrameData().forEach(System.out::println);
+//        after.getFrameData().forEach(entry -> entry.setRotationX(0f));
+//        after.getFrameData().forEach(entry -> entry.setRotationY(90f));
+//        after.getFrameData().forEach(entry -> entry.setRotationZ(0f));
+        result.setRecords(getRecords(clone));
+        setMotionHeaderValues(result, clone);
         result.getRecords().sort(Comparator.comparingInt(Record::getBoneIndex));
         return result;
     }
@@ -336,5 +353,36 @@ public class Converter {
                 .collect(Collectors.toList()));
 
         return value3;
+    }
+
+    public void convertBvhRotationOrderFromZXYToXYZ(Bvh target) {
+        List<Joint> joints = target.getAllJointsAsList();
+
+        joints.forEach(joint -> {
+            if (Objects.nonNull(joint.getFrameData())) {
+                joint.getFrameData().forEach(entry -> {
+                    Rotation rotation = new Rotation(RotationOrder.XYZ,
+                            RotationConvention.VECTOR_OPERATOR,
+                            Math.toRadians(entry.getRotationX()),
+                            Math.toRadians(entry.getRotationY()),
+                            Math.toRadians(entry.getRotationZ()));
+                    double[] angles;
+
+                    try {
+                        angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
+                    } catch (CardanEulerSingularityException e) {
+                        rotation = new Rotation(RotationOrder.XYZ,
+                                RotationConvention.VECTOR_OPERATOR,
+                                Math.toRadians(entry.getRotationX() - 0.1d),
+                                Math.toRadians(entry.getRotationY() - 0.1d),
+                                Math.toRadians(entry.getRotationZ() - 0.1d));
+                        angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
+                    }
+                    entry.setRotationX((float) Math.toDegrees(angles[0]));
+                    entry.setRotationY((float) Math.toDegrees(angles[1]));
+                    entry.setRotationZ((float) Math.toDegrees(angles[2]));
+                });
+            }
+        });
     }
 }
