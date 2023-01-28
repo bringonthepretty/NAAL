@@ -95,9 +95,6 @@ public class FloatingPointConvertor {
      * @return byte array result
      */
     public byte[] floatToBytes(float source) {//todo may contain conversion errors
-        if (source == 0.0f) {
-            return new byte[]{0, 0};
-        }
         int bias = 47;
         int signBit;
         LinkedList<Integer> pureBinaryWholeNumber = new LinkedList<>();
@@ -110,6 +107,15 @@ public class FloatingPointConvertor {
 
         signBit = source >= 0 ? 0 : 1;
         source = Math.abs(source);
+
+        if (source > 511.9999F) {
+            source = 511.9999F;
+        }
+
+        if (source < 1E-14F) {
+            return new byte[]{0, 0};
+        }
+
         fraction = source - (int)source;
 
         int wholeNumber = (int)source;
@@ -161,7 +167,8 @@ public class FloatingPointConvertor {
         StringBuilder exponentBitsAsString = new StringBuilder(Integer.toBinaryString(biasedExponent));
 
         if (exponentBitsAsString.length() > 6){
-            throw new IllegalArgumentException("Value is too big or too small");
+            //exponentBitsAsString = new StringBuilder("111111");
+            throw new IllegalArgumentException("Value " + source + " is too big or too small");
         }
 
         while (exponentBitsAsString.length() < 6){
