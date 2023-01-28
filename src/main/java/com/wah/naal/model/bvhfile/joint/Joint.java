@@ -97,9 +97,10 @@ public class Joint implements Cloneable{
 
         List<FrameData> clonedFrameData = new ArrayList<>();
 
-        frameData.forEach(entry -> clonedFrameData.add(entry.clone()));
-
-        clone.setFrameData(clonedFrameData);
+        if (Objects.nonNull(frameData)) {
+            frameData.forEach(entry -> clonedFrameData.add(entry.clone()));
+            clone.setFrameData(clonedFrameData);
+        }
 
         return clone;
     }
