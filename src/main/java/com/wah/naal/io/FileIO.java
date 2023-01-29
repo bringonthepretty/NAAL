@@ -39,7 +39,7 @@ public class FileIO {
     /**
      * Reads all {@link Motion} files from provided directory as byte list
      * @param path path to be scanned
-     * @return all {@link Motion} files from application's run directory
+     * @return all {@link Motion} files from scanned folder
      */
     public List<List<Byte>> loadAllMotions(String path) {
         File folder = new File(path);
@@ -77,7 +77,8 @@ public class FileIO {
 
     /**
      * Reads all bvh files from provided directory as map where key is file name and value is file data
-     * @return all bvh files from application's run directory
+     * @param path path to be scanned
+     * @return all bvh files from scanned folder
      */
     public Map<String, String> loadAllBvh(String path) {
         Map<String, String> result = new HashMap<>();
@@ -98,7 +99,7 @@ public class FileIO {
     }
 
     /**
-     * Reads all bvh files from application's run directory as string
+     * Reads all bvh files from application's run directory as map where key is file name and value is file data
      * @return all bvh files from application's run directory
      */
     public Map<String, String> loadAllBvh() {
@@ -146,6 +147,37 @@ public class FileIO {
         } catch (IOException e) {
             System.err.println(e.getMessage());
         }
+    }
+
+    /**
+     * Reads all bvh files from path to folder as map where key is file name and value is file data
+     * @param path path to be scanned
+     * @return all bvh files from scanned folder
+     */
+    public Map<String, String> loadAllRawAnimationFiles(String path) {
+        Map<String, String> result = new HashMap<>();
+        File folder = new File(path);
+        File[] files = folder.listFiles();
+        if (files == null) {
+            return new HashMap<>();
+        }
+
+        Arrays.stream(files)
+                .filter(file -> file.getName().endsWith(".ran"))
+                .forEach(file -> {
+                    try {
+                        result.put(file.getName(), Files.readString(file.toPath(), StandardCharsets.UTF_8));
+                    } catch (IOException ignored) { }
+                });
+        return result;
+    }
+
+    /**
+     * Reads all bvh files from application's run directory as map where key is file name and value is file data
+     * @return all bvh files from application's run directory
+     */
+    public Map<String, String> loadAllRawAnimationFiles() {
+        return loadAllRawAnimationFiles(getCurrentPath());
     }
 
     private String getCurrentPath() {

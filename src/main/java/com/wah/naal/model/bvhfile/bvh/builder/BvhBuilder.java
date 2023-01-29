@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This class represents builder for BioVision motion capture {@link Bvh}
  * This class is singleton
  */
+@Deprecated(forRemoval = true)
 public class BvhBuilder {
 
     private static BvhBuilder instance;

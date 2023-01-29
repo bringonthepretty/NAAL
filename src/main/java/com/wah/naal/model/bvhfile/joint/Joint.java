@@ -10,6 +10,7 @@ import java.util.Objects;
 /**
  * This class represent {@link  Bvh}'s joint
  */
+@Deprecated(forRemoval = true)
 public class Joint implements Cloneable{
     private String name;
 

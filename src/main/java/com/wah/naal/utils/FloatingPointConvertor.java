@@ -12,6 +12,9 @@ import java.util.*;
  */
 public class FloatingPointConvertor {
 
+    private static final Float MAX_2_BYTE_FLOAT_VALUE = 511.9999F;
+    private static final Float MIN_2_BYTE_FLOAT_VALUE = 1E-14F;
+
     private static FloatingPointConvertor instance;
 
     /**
@@ -108,11 +111,11 @@ public class FloatingPointConvertor {
         signBit = source >= 0 ? 0 : 1;
         source = Math.abs(source);
 
-        if (source > 511.9999F) {
-            source = 511.9999F;
+        if (source > MAX_2_BYTE_FLOAT_VALUE) {
+            source = MAX_2_BYTE_FLOAT_VALUE;
         }
 
-        if (source < 1E-14F) {
+        if (source < MIN_2_BYTE_FLOAT_VALUE) {
             return new byte[]{0, 0};
         }
 

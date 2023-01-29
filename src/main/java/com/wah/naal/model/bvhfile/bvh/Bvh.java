@@ -9,6 +9,7 @@ import java.util.Objects;
 /**
  * This class represents BioVision motion capture file.
  */
+@Deprecated(forRemoval = true)
 public class Bvh implements Cloneable{
     private String name;
     private Float offsetX;

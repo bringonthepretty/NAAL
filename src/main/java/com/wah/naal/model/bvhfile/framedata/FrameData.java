@@ -7,6 +7,7 @@ import java.util.Objects;
 /**
  * This class represents data for one frame for {@link Joint}
  */
+@Deprecated(forRemoval = true)
 public class FrameData implements Cloneable{
     private Float positionX;
     private Float positionY;

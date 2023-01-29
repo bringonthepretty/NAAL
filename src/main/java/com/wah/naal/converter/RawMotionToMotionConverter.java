@@ -1,35 +1,25 @@
 package com.wah.naal.converter;
 
 import com.wah.naal.io.FileIO;
-import com.wah.naal.model.bvhfile.bvh.Bvh;
-import com.wah.naal.model.bvhfile.joint.Joint;
 import com.wah.naal.model.motionfile.motion.Motion;
 import com.wah.naal.model.motionfile.record.Record;
 import com.wah.naal.model.motionfile.value.api.Value;
 import com.wah.naal.model.motionfile.value.impl.Value0;
 import com.wah.naal.model.motionfile.value.impl.Value3;
-import org.apache.commons.math3.geometry.euclidean.threed.CardanEulerSingularityException;
-import org.apache.commons.math3.geometry.euclidean.threed.Rotation;
-import org.apache.commons.math3.geometry.euclidean.threed.RotationConvention;
-import org.apache.commons.math3.geometry.euclidean.threed.RotationOrder;
+import com.wah.naal.model.rawanimationfile.bone.Bone;
+import com.wah.naal.model.rawanimationfile.framedata.RotationFrameData;
+import com.wah.naal.model.rawanimationfile.rawanimation.RawAnimation;
+import com.wah.naal.model.rawanimationfile.framedata.PositionFrameData;
+import org.apache.commons.math3.geometry.euclidean.threed.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * This class represents converter from BioVision motion capture {@link Bvh} to
- * Nier:Automata proprietary motion format {@link Motion}.
+ * This class represents converter from raw animation {@link RawAnimation} to Nier:Automata proprietary motion format {@link Motion}.
  * This class is singleton
  */
-@Deprecated(forRemoval = true)
-public class Converter {
-
-    private static final Double DEGREE_TO_AUTOMATA_ROTATION_UNITS_RATIO = 0.0174565566508981d;
-    private static final Double DEGREES_360_TO_AUTOMATA_ROTATION_UNITS_RATIO = 6.284360394323324d;
-
-    private static final Double METER_TO_AUTOMATA_POSITION_UNITS_RATIO = 1d;
-
-    private static final Float Y_OFFSET = 1.016f;
+public class RawMotionToMotionConverter {
 
     //05 04 12 20
     //value from pl0100_0006.mot, seems to be same to some files, purpose is unknown
@@ -51,11 +41,9 @@ public class Converter {
 
     private static final List<Integer> allowedBones = new ArrayList<>();
 
-    private static Map<Integer, Integer> bonesMap;
+    private static final Map<Integer, Integer> bonesMap;
 
-    private static Converter instance;
-
-    private Converter() {
+    static {
         bonesMap = FileIO.getInstance().loadBonesMap();
 
         for (int i = -1; i <= 22; i++) {
@@ -73,28 +61,30 @@ public class Converter {
         allowedBones.add(32767);
     }
 
+    private static RawMotionToMotionConverter instance;
+
+    private RawMotionToMotionConverter() {}
+
     /**
-     * Returns instance of {@link Converter}
-     * @return instance of {@link Converter}
+     * Returns instance of {@link RawMotionToMotionConverter}
+     * @return instance of {@link RawMotionToMotionConverter}
      */
-    public static synchronized Converter getInstance() {
+    public static RawMotionToMotionConverter getInstance() {
         if (Objects.isNull(instance)) {
-            instance = new Converter();
+            instance = new RawMotionToMotionConverter();
         }
         return instance;
     }
 
     /**
-     * Converts {@link Bvh} to {@link Motion}
-     * @param source source bvh
+     * Converts {@link RawAnimation} to {@link Motion}
+     * @param source source raw animation
      * @return converted {@link Motion}
      */
-    public Motion convert(Bvh source) {
+    public Motion convert(RawAnimation source) {
         Motion result = new Motion();
-        Bvh clone = source.clone();
-        convertBvhRotationOrderFromZXYToXYZ(clone);
-        result.setRecords(getRecords(clone));
-        setMotionHeaderValues(result, clone);
+        result.setRecords(getRecords(source));
+        setMotionHeaderValues(result, source);
         result.getRecords().sort(Comparator.comparingInt(Record::getBoneIndex));
         return result;
     }
@@ -139,40 +129,35 @@ public class Converter {
         return result;
     }
 
-    private void setMotionHeaderValues(Motion target, Bvh source) {
+    private void setMotionHeaderValues(Motion target, RawAnimation source) {
         target.setFileDescription("mot");
         target.setUnknown1(DEFAULT_MOTION_HEADER_UNKNOWN1);
         target.setFlags(DEFAULT_MOTION_HEADER_FLAGS);
-        target.setFrameCount(source.getFrameCount());
+        target.setFrameCount(source.getBones().get(0).getFrameDataList().size());
         target.setRecordsCount((long)target.getRecords().size());
         target.setUnknown2(DEFAULT_MOTION_HEADER_UNKNOWN2);
         target.setMotionName(source.getName().replace("pl0100","pl0000")); //todo pl0100 is probably not only one possible string
     }
 
-    private List<Record> getRecords(Bvh source) {
+    private List<Record> getRecords(RawAnimation source) {
         List<Record> records = new ArrayList<>();
-        List<Joint> joints = source.getAllJointsAsList();
-        joints.forEach(joint -> records.addAll(convertJointToRotationsRecordsList(joint)));
-        Joint joint0 = joints.stream().filter(joint -> joint.getName().equals("bone0") || joint.getName().equals("bone000")).findFirst().orElse(null);
+        List<Bone> bones = source.getBones();
+        bones.forEach(joint -> records.addAll(convertBoneToRotationsRecordsList(joint)));
 
-        if (Objects.isNull(joint0)) {
-            throw new RuntimeException("0 joint must be present");
-        }
-
-        records.addAll(convert0JointToPositionRecordList(joint0));
+        records.addAll(convertPositionFrameDataListToPositionRecordList(source.getLocationFrameDataList()));
 
         records.addAll(getBaseBoneRotationDummy());
 
         return records;
     }
 
-    private List<Record> convertJointToRotationsRecordsList(Joint joint) {
+    private List<Record> convertBoneToRotationsRecordsList(Bone bone) {
         List<Record> result = new ArrayList<>();
 
         int boneIndex;
 
         try {
-            boneIndex = Integer.parseInt(joint.getName().replace("bone", ""));
+            boneIndex = Integer.parseInt(bone.getName().replace("bone", ""));
         } catch (NumberFormatException e){
             return result;
         }
@@ -195,17 +180,20 @@ public class Converter {
         recordRotationY.setValueIndex(4);
         recordRotationZ.setValueIndex(5);
 
-        recordRotationX.setValueEntriesCount(joint.getFrameData().size());
-        recordRotationY.setValueEntriesCount(joint.getFrameData().size());
-        recordRotationZ.setValueEntriesCount(joint.getFrameData().size());
+        recordRotationX.setValueEntriesCount(bone.getFrameDataList().size());
+        recordRotationY.setValueEntriesCount(bone.getFrameDataList().size());
+        recordRotationZ.setValueEntriesCount(bone.getFrameDataList().size());
 
         recordRotationX.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
         recordRotationY.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
         recordRotationZ.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
 
-        Value valueX = generateRotationValue(getJointRotationAxisData(joint, 0));
-        Value valueY = generateRotationValue(getJointRotationAxisData(joint, 1));
-        Value valueZ = generateRotationValue(getJointRotationAxisData(joint, 2));
+        List<Vector3D> rotationsAsCardan = new ArrayList<>();
+        bone.getFrameDataList().forEach(rotationFrameData -> rotationsAsCardan.add(convertQuaternionRotationToCardanXYZRotation(rotationFrameData)));
+
+        Value valueX = generateRotationValue(rotationsAsCardan.stream().map(vector3D -> (float)vector3D.getX()).collect(Collectors.toCollection(ArrayList::new)));
+        Value valueY = generateRotationValue(rotationsAsCardan.stream().map(vector3D -> (float)vector3D.getY()).collect(Collectors.toCollection(ArrayList::new)));
+        Value valueZ = generateRotationValue(rotationsAsCardan.stream().map(vector3D -> (float)vector3D.getZ()).collect(Collectors.toCollection(ArrayList::new)));
 
         recordRotationX.setValue(valueX);
         recordRotationY.setValue(valueY);
@@ -221,7 +209,7 @@ public class Converter {
         return result;
     }
 
-    private List<Record> convert0JointToPositionRecordList(Joint joint) {
+    private List<Record> convertPositionFrameDataListToPositionRecordList(List<PositionFrameData> positionFrameDataList) {
         List<Record> result = new ArrayList<>();
 
         Record recordPositionX = new Record();
@@ -236,19 +224,17 @@ public class Converter {
         recordPositionY.setValueIndex(1);
         recordPositionZ.setValueIndex(2);
 
-        recordPositionX.setValueEntriesCount(joint.getFrameData().size());
-        recordPositionY.setValueEntriesCount(joint.getFrameData().size());
-        recordPositionZ.setValueEntriesCount(joint.getFrameData().size());
+        recordPositionX.setValueEntriesCount(positionFrameDataList.size());
+        recordPositionY.setValueEntriesCount(positionFrameDataList.size());
+        recordPositionZ.setValueEntriesCount(positionFrameDataList.size());
 
         recordPositionX.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
         recordPositionY.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
         recordPositionZ.setUnknown(DEFAULT_RECORD_HEADER_UNKNOWN);
 
-        List<Float> xData = getJointPositionAxisData(joint, 0);
-        List<Float> yData = getJointPositionAxisData(joint, 1);
-        List<Float> zData = getJointPositionAxisData(joint, 2);
-
-        yData = yData.stream().map(value -> value - Y_OFFSET).collect(Collectors.toCollection(ArrayList::new));
+        List<Float> xData = positionFrameDataList.stream().map(PositionFrameData::getX).collect(Collectors.toCollection(ArrayList::new));
+        List<Float> yData = positionFrameDataList.stream().map(PositionFrameData::getY).collect(Collectors.toCollection(ArrayList::new));
+        List<Float> zData = positionFrameDataList.stream().map(PositionFrameData::getZ).collect(Collectors.toCollection(ArrayList::new));
 
         Value valueX = generatePositionValue(xData);
         Value valueY = generatePositionValue(yData);
@@ -269,52 +255,16 @@ public class Converter {
         return result;
     }
 
-    /**
-     * Returns list of values for provided axis
-     * @param joint source joint
-     * @param axisIndex axis, 0 - X axis, 1 - Y axis, 2 - Z axis
-     * @return list of values for provided axis
-     */
-    private List<Float> getJointRotationAxisData(Joint joint, int axisIndex) {
-        return joint.getFrameData()
-                .stream()
-                .map(frameData ->
-                        switch (axisIndex) {
-                            case 1 -> frameData.getRotationY();
-                            case 2 -> frameData.getRotationZ();
-                            default -> frameData.getRotationX();
-                })
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
-    /**
-     * Returns list of values for provided axis
-     * @param joint source joint
-     * @param axisIndex axis, 0 - X axis, 1 - Y axis, 2 - Z axis
-     * @return list of values for provided axis
-     */
-    private List<Float> getJointPositionAxisData(Joint joint, int axisIndex) {
-        return joint.getFrameData()
-                .stream()
-                .map(frameData ->
-                        switch (axisIndex) {
-                            case 1 -> frameData.getPositionY();
-                            case 2 -> frameData.getPositionZ();
-                            default -> frameData.getPositionX();
-                        })
-                .collect(Collectors.toCollection(ArrayList::new));
-    }
-
     private Value generateRotationValue(List<Float> data) {
-        return generateValue(data, DEGREE_TO_AUTOMATA_ROTATION_UNITS_RATIO);
+        return generateValue(data, 1d);
     }
 
     private Value generatePositionValue(List<Float> data) {
-        return generateValue(data, METER_TO_AUTOMATA_POSITION_UNITS_RATIO);
+        return generateValue(data, 1d);
     }
 
-    private Value generateValue(List<Float> data, Double ratio) { //todo implement clever value type choose
-        if (data.stream().allMatch(value -> value == 0f)) {
+    private Value generateValue(List<Float> data, Double ratio) {
+        if (data.stream().allMatch(value -> value == 0f )) {
             return new Value0(0f);
         }
 
@@ -345,34 +295,15 @@ public class Converter {
         return value3;
     }
 
-    public void convertBvhRotationOrderFromZXYToXYZ(Bvh target) {
-        List<Joint> joints = target.getAllJointsAsList();
-
-        joints.forEach(joint -> {
-            if (Objects.nonNull(joint.getFrameData())) {
-                joint.getFrameData().forEach(entry -> {
-                    Rotation rotation = new Rotation(RotationOrder.XYZ,
-                            RotationConvention.VECTOR_OPERATOR,
-                            Math.toRadians(entry.getRotationX()),
-                            Math.toRadians(entry.getRotationY()),
-                            Math.toRadians(entry.getRotationZ()));
-                    double[] angles;
-
-                    try {
-                        angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
-                    } catch (CardanEulerSingularityException e) {
-                        rotation = new Rotation(RotationOrder.XYZ,
-                                RotationConvention.VECTOR_OPERATOR,
-                                Math.toRadians(entry.getRotationX() - 0.1d),
-                                Math.toRadians(entry.getRotationY() - 0.1d),
-                                Math.toRadians(entry.getRotationZ() - 0.1d));
-                        angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
-                    }
-                    entry.setRotationX((float) Math.toDegrees(angles[0]));
-                    entry.setRotationY((float) Math.toDegrees(angles[1]));
-                    entry.setRotationZ((float) Math.toDegrees(angles[2]));
-                });
-            }
-        });
+    private Vector3D convertQuaternionRotationToCardanXYZRotation(RotationFrameData source) {
+        Rotation rotation = new Rotation(source.getW(), source.getX(), source.getY(), source.getZ(), true);
+        double[] angles;
+        try {
+            angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
+        } catch (CardanEulerSingularityException e) {
+            rotation = new Rotation(source.getW(), source.getX() - 0.01, source.getY() - 0.01, source.getZ() - 0.01, true); //solution is highly questionable and better be replaced
+            angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
+        }
+        return new Vector3D(angles[0], angles[1], angles[2] * -1);
     }
 }

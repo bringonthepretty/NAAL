@@ -1,21 +1,21 @@
 package com.wah.naal;
 
-import com.wah.naal.converter.Converter;
+import com.wah.naal.converter.RawMotionToMotionConverter;
 import com.wah.naal.io.FileIO;
-import com.wah.naal.model.bvhfile.bvh.Bvh;
-import com.wah.naal.model.bvhfile.bvh.builder.BvhBuilder;
 import com.wah.naal.model.motionfile.motion.Motion;
+import com.wah.naal.model.rawanimationfile.rawanimation.RawAnimation;
+import com.wah.naal.model.rawanimationfile.rawanimation.builder.RawAnimationBuilder;
 
 public class Application {
 
-    public static Converter converter = Converter.getInstance();
     public static FileIO fileIO = FileIO.getInstance();
-    public static BvhBuilder bvhBuilder = BvhBuilder.getInstance();
+    public static RawAnimationBuilder rawAnimationBuilder = RawAnimationBuilder.getInstance();
+    public static RawMotionToMotionConverter rawMotionConverter = RawMotionToMotionConverter.getInstance();
 
     public static void main(String[] args) {
-        fileIO.loadAllBvh().forEach((name, data) -> {
-            Bvh bvh = bvhBuilder.build(data, name);
-            Motion motion = converter.convert(bvh);
+        fileIO.loadAllRawAnimationFiles().forEach((name, data) -> {
+            RawAnimation rawAnimation = rawAnimationBuilder.build(data, name);
+            Motion motion = rawMotionConverter.convert(rawAnimation);
             fileIO.saveMotion(motion, name);
         });
     }
