@@ -1,25 +1,27 @@
-import bpy, mathutils
-from bpy import context
+import bpy
 from bpy_extras.io_utils import ExportHelper
-from os.path import dirname, join
+import os
 
 bl_info = {
-    "name": "Nier:Automata Animation Exporter",
-    "category": "Import-Export",
-    "blender": (2, 80, 0),
+    "name" : "Nier:Automata Animation Exporters",
+    "blender" : (2, 80, 0),
+    "location" : "",
+    "warning" : "",
+    "category" : "Import-Export"
 }
 
-class LocationBones(bpy.types.Operator, ExportHelper):
-    
-    bl_idname = "animation.animation"  
-    bl_label = "Export Nier:Automata Animation File"         
-    bl_options = {'REGISTER', 'UNDO'}
-    
+class ExportMotFile(bpy.types.Operator, ExportHelper):
+    """Export a Nier Animation mot file"""
+    bl_idname = "export_animation.ran"
+    bl_label = "Export"
+    bl_options = {'UNDO'}
+
     filename_ext = ".ran"
+    filter_glob: bpy.props.StringProperty(default="*.ran", options={'HIDDEN'})
 
     def execute(self, context):
         if bpy.context.object and bpy.data.filepath:
-            fname = bpy.context.object.name + ".ran"
+            fname = self.filepath
             fpath = join( dirname( bpy.data.filepath ),  fname )
             with open( fpath, "w" ) as f:
                 bone = bpy.context.active_object.pose.bones[0]
@@ -34,17 +36,20 @@ class LocationBones(bpy.types.Operator, ExportHelper):
                         context.scene.frame_set(frame)
                         f.write( str( bone.rotation_quaternion) )
                     f.write( str( "\n" ) )
-            f.close()
+
+        self.report({'INFO'}, "Exported ran file")
+
         return {'FINISHED'}
 
-def menu_func(self, context):
-    self.layout.operator(LocationBones.bl_idname)
+def exportMenuAdditions(self, context):
+    self.layout.operator(ExportMotFile.bl_idname, text="Nier:Automata animation (.ran)")
 
 def register():
-    bpy.utils.register_class(LocationBones)
+    bpy.utils.register_class(ExportMotFile)
+
+    bpy.types.TOPBAR_MT_file_export.append(exportMenuAdditions)
 
 def unregister():
-    bpy.utils.unregister_class(LocationBones)
-    
-if __name__ == '__main__':
-    register()
+    bpy.utils.unregister_class(ExportMotFile)
+
+    bpy.types.TOPBAR_MT_file_export.remove(exportMenuAdditions)
