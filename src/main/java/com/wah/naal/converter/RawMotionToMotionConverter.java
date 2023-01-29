@@ -5,7 +5,7 @@ import com.wah.naal.model.motionfile.motion.Motion;
 import com.wah.naal.model.motionfile.record.Record;
 import com.wah.naal.model.motionfile.value.api.Value;
 import com.wah.naal.model.motionfile.value.impl.Value0;
-import com.wah.naal.model.motionfile.value.impl.Value3;
+import com.wah.naal.model.motionfile.value.impl.Value2;
 import com.wah.naal.model.rawanimationfile.bone.Bone;
 import com.wah.naal.model.rawanimationfile.framedata.RotationFrameData;
 import com.wah.naal.model.rawanimationfile.rawanimation.RawAnimation;
@@ -136,7 +136,8 @@ public class RawMotionToMotionConverter {
         target.setFrameCount(source.getBones().get(0).getFrameDataList().size());
         target.setRecordsCount((long)target.getRecords().size());
         target.setUnknown2(DEFAULT_MOTION_HEADER_UNKNOWN2);
-        target.setMotionName(source.getName().replace("pl0100","pl0000")); //todo pl0100 is probably not only one possible string
+        String name = !source.getName().contains("pl0100") ? source.getName() : source.getName().replace("pl0100", "pl0000");
+        target.setMotionName(name);
     }
 
     private List<Record> getRecords(RawAnimation source) {
@@ -271,20 +272,20 @@ public class RawMotionToMotionConverter {
         Float maxValueEntryNormalized;
         Float minValueEntry = data.stream().min(Float::compareTo).orElse(0f);
         Float valueDelta;
-        Value3 value3 = new Value3();
+        Value2 value2 = new Value2();
 
         data = data.stream().map(value -> value - minValueEntry).collect(Collectors.toCollection(ArrayList::new));
-        value3.setValue((float) (minValueEntry * ratio));
+        value2.setValue((float) (minValueEntry * ratio));
 
         maxValueEntryNormalized = data.stream().max(Float::compareTo).orElse(0f);
-        valueDelta = (float) (maxValueEntryNormalized * ratio / VALUE_TYPE_3_MAX_NUMBER);
-        value3.setValueDelta(valueDelta);
-        Float valueEntryToByteNumber = VALUE_TYPE_3_MAX_NUMBER / maxValueEntryNormalized;
+        valueDelta = (float) (maxValueEntryNormalized * ratio / VALUE_TYPE_2_MAX_NUMBER);
+        value2.setValueDelta(valueDelta);
+        Float valueEntryToByteNumber = VALUE_TYPE_2_MAX_NUMBER / maxValueEntryNormalized;
 
-        value3.setEntries(data.stream()
+        value2.setEntries(data.stream()
                 .map(frameDegree -> {
                     int value = (int)(frameDegree * valueEntryToByteNumber);
-                    value = value % (VALUE_TYPE_3_MAX_NUMBER + 1); //todo is that necessary
+                    value = value % (VALUE_TYPE_2_MAX_NUMBER + 1);
                     if(value == Integer.MAX_VALUE) {
                         value = 0;
                     }
@@ -292,7 +293,7 @@ public class RawMotionToMotionConverter {
                 })
                 .collect(Collectors.toList()));
 
-        return value3;
+        return value2;
     }
 
     private Vector3D convertQuaternionRotationToCardanXYZRotation(RotationFrameData source) {
