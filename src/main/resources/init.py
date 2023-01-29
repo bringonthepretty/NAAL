@@ -3,7 +3,7 @@ from bpy_extras.io_utils import ExportHelper
 import os
 
 bl_info = {
-    "name" : "Nier:Automata Animation Exporters",
+    "name" : "Nier:Automata Animation Exporter",
     "blender" : (2, 80, 0),
     "location" : "",
     "warning" : "",
@@ -11,7 +11,7 @@ bl_info = {
 }
 
 class ExportMotFile(bpy.types.Operator, ExportHelper):
-    """Export a Nier Animation mot file"""
+    """Export a Nier Animation Animation file"""
     bl_idname = "export_animation.ran"
     bl_label = "Export"
     bl_options = {'UNDO'}
