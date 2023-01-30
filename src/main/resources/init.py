@@ -1,6 +1,7 @@
 import bpy
 from bpy_extras.io_utils import ExportHelper
 import os
+from os.path import dirname, join
 
 bl_info = {
     "name" : "Nier:Automata Animation Exporter",
@@ -11,7 +12,7 @@ bl_info = {
 }
 
 class ExportMotFile(bpy.types.Operator, ExportHelper):
-    """Export a Nier Animation Animation file"""
+    """Export a Nier Animation file"""
     bl_idname = "export_animation.ran"
     bl_label = "Export"
     bl_options = {'UNDO'}
