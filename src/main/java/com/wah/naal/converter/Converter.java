@@ -146,7 +146,7 @@ public class Converter {
         target.setFrameCount(source.getFrameCount());
         target.setRecordsCount((long)target.getRecords().size());
         target.setUnknown2(DEFAULT_MOTION_HEADER_UNKNOWN2);
-        target.setMotionName(source.getName().replace("pl0100","pl0000")); //todo pl0100 is probably not only one possible string
+        target.setMotionName(source.getName().replace("pl0100","pl0000"));
     }
 
     private List<Record> getRecords(Bvh source) {
@@ -313,7 +313,7 @@ public class Converter {
         return generateValue(data, METER_TO_AUTOMATA_POSITION_UNITS_RATIO);
     }
 
-    private Value generateValue(List<Float> data, Double ratio) { //todo implement clever value type choose
+    private Value generateValue(List<Float> data, Double ratio) {
         if (data.stream().allMatch(value -> value == 0f)) {
             return new Value0(0f);
         }
@@ -334,7 +334,7 @@ public class Converter {
         value3.setEntries(data.stream()
                 .map(frameDegree -> {
                     int value = (int)(frameDegree * valueEntryToByteNumber);
-                    value = value % (VALUE_TYPE_3_MAX_NUMBER + 1); //todo is that necessary
+                    value = value % (VALUE_TYPE_3_MAX_NUMBER + 1);
                     if(value == Integer.MAX_VALUE) {
                         value = 0;
                     }

@@ -36,7 +36,7 @@ public class FloatingPointConvertor {
      * @param source source bytes
      * @return float result
      */
-    public float bytesToFloat(byte[] source) {//todo may contain conversion errors
+    public float bytesToFloat(byte[] source) {
 
         if (source.length < 2){
             throw new IllegalArgumentException("array must be at least 2 bytes long");
@@ -97,7 +97,7 @@ public class FloatingPointConvertor {
      * @param source source float
      * @return byte array result
      */
-    public byte[] floatToBytes(float source) {//todo may contain conversion errors
+    public byte[] floatToBytes(float source) {
         int bias = 47;
         int signBit;
         LinkedList<Integer> pureBinaryWholeNumber = new LinkedList<>();
