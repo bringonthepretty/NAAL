@@ -29,7 +29,6 @@ NAAL is a library that exports Nier:Automata .mot files from blender
 7. If you want to animate someone other than A2/2B, you should import wmb to blender using WoefulWolf's https://github.com/WoefulWolf/NieR2Blender2NieR, set rest pose to t pose and create map.txt using Kerilk's https://github.com/Kerilk/bayonetta_tools/blob/master/lib/bayonetta/tools/wmb_get_bone_map.rb (requires installed ruby on pc)
 8. Tool ignores bones scale
 9. Tool supposed to work with player models only and behaviour with non-player model (enemies, weapons, etc) is undefined. Throught, tool has better chances to work as expected with humanoid enemies and worse chances with weapons, large enemies and animated map objects
-10. 
 
 # Troubleshooting
 Tool is in early beta state, so expect bugs. Also, feel free to contact me on discord [Wait and Hope]#3662 or create issue on github
