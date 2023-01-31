@@ -43,8 +43,6 @@ public class RawMotionToMotionConverter {
 
     private static final List<Integer> allowedBones = new ArrayList<>();
 
-    //private static final Map<Integer, Integer> bonesMap;
-
     private static final Logger logger = LoggerFactory.getLogger(RawMotionToMotionConverter.class);
 
     static {
