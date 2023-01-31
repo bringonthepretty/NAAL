@@ -1,11 +1,15 @@
 package com.wah.naal.io;
 
 import com.wah.naal.Application;
+import com.wah.naal.exception.FileIOException;
 import com.wah.naal.generator.MotionFileGenerator;
 import com.wah.naal.model.motionfile.motion.Motion;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
@@ -22,6 +26,8 @@ public class FileIO {
     private static FileIO instance;
 
     private MotionFileGenerator motionFileGenerator = MotionFileGenerator.getInstance();
+
+    private static final Logger logger = LoggerFactory.getLogger(FileIO.class);
 
     private FileIO(){}
 
@@ -119,10 +125,14 @@ public class FileIO {
                 String[] data = line.split(": ");
                 try {
                     result.put(Integer.parseInt(data[1]), Integer.parseInt(data[0]));
-                } catch (NumberFormatException ignored) {}
+                } catch (NumberFormatException e) {
+                    logger.warn("mapping " + Arrays.toString(data) + " is invalid and will be skipped");
+                }
             });
+        } catch (FileNotFoundException e) {
+            throw new FileIOException("map.txt file is not present");
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new FileIOException("IO error occurred");
         }
         return result;
     }

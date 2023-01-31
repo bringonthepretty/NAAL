@@ -43,12 +43,11 @@ public class RawMotionToMotionConverter {
 
     private static final List<Integer> allowedBones = new ArrayList<>();
 
-    private static final Map<Integer, Integer> bonesMap;
+    //private static final Map<Integer, Integer> bonesMap;
 
     private static final Logger logger = LoggerFactory.getLogger(RawMotionToMotionConverter.class);
 
     static {
-        bonesMap = FileIO.getInstance().loadBonesMap();
 
         for (int i = -1; i <= 22; i++) {
             allowedBones.add(i);
@@ -85,9 +84,9 @@ public class RawMotionToMotionConverter {
      * @param source source raw animation
      * @return converted {@link Motion}
      */
-    public Motion convert(RawAnimation source) {
+    public Motion convert(RawAnimation source, Map<Integer, Integer> bonesMap) {
         Motion result = new Motion();
-        result.setRecords(getRecords(source));
+        result.setRecords(getRecords(source, bonesMap));
         setMotionHeaderValues(result, source);
         result.getRecords().sort(Comparator.comparingInt(Record::getBoneIndex));
         return result;
@@ -144,10 +143,10 @@ public class RawMotionToMotionConverter {
         target.setMotionName(name);
     }
 
-    private List<Record> getRecords(RawAnimation source) {
+    private List<Record> getRecords(RawAnimation source, Map<Integer, Integer> bonesMap) {
         List<Record> records = new ArrayList<>();
         List<Bone> bones = source.getBones();
-        bones.forEach(joint -> records.addAll(convertBoneToRotationsRecordsList(joint)));
+        bones.forEach(joint -> records.addAll(convertBoneToRotationsRecordsList(joint, bonesMap)));
 
         records.addAll(convertPositionFrameDataListToPositionRecordList(source.getLocationFrameDataList()));
 
@@ -156,30 +155,37 @@ public class RawMotionToMotionConverter {
         return records;
     }
 
-    private List<Record> convertBoneToRotationsRecordsList(Bone bone) {
+    private List<Record> convertBoneToRotationsRecordsList(Bone bone, Map<Integer, Integer> bonesMap) {
         List<Record> result = new ArrayList<>();
 
-        int boneIndex;
+        Integer boneIndex;
+        Integer mappedBoneIndex;
 
         try {
             boneIndex = Integer.parseInt(bone.getName().replace("bone", ""));
         } catch (NumberFormatException e){
+            logger.warn("Bone name " + bone.getName() + " is invalid");
             return result;
         }
 
-        boneIndex = bonesMap.getOrDefault(boneIndex, 0);
+        mappedBoneIndex = bonesMap.get(boneIndex);
 
-        if (!allowedBones.contains(boneIndex)) {
-            logger.warn("Bone " + boneIndex + " is unknown");
+        if (Objects.isNull(mappedBoneIndex)) {
+            mappedBoneIndex = boneIndex;
+            logger.warn("Bone " + boneIndex + " is not specified in map file and automatically mapped to itself");
+        }
+
+        if (!allowedBones.contains(mappedBoneIndex)) {
+            logger.warn("Bone " + mappedBoneIndex + " is unknown");
         }
 
         Record recordRotationX = new Record();
         Record recordRotationY = new Record();
         Record recordRotationZ = new Record();
 
-        recordRotationX.setBoneIndex(boneIndex);
-        recordRotationY.setBoneIndex(boneIndex);
-        recordRotationZ.setBoneIndex(boneIndex);
+        recordRotationX.setBoneIndex(mappedBoneIndex);
+        recordRotationY.setBoneIndex(mappedBoneIndex);
+        recordRotationZ.setBoneIndex(mappedBoneIndex);
 
         recordRotationX.setValueIndex(3);
         recordRotationY.setValueIndex(4);
