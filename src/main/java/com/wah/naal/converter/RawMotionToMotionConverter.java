@@ -11,6 +11,8 @@ import com.wah.naal.model.rawanimationfile.framedata.RotationFrameData;
 import com.wah.naal.model.rawanimationfile.rawanimation.RawAnimation;
 import com.wah.naal.model.rawanimationfile.framedata.PositionFrameData;
 import org.apache.commons.math3.geometry.euclidean.threed.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -42,6 +44,8 @@ public class RawMotionToMotionConverter {
     private static final List<Integer> allowedBones = new ArrayList<>();
 
     private static final Map<Integer, Integer> bonesMap;
+
+    private static final Logger logger = LoggerFactory.getLogger(RawMotionToMotionConverter.class);
 
     static {
         bonesMap = FileIO.getInstance().loadBonesMap();
@@ -166,7 +170,7 @@ public class RawMotionToMotionConverter {
         boneIndex = bonesMap.getOrDefault(boneIndex, 0);
 
         if (!allowedBones.contains(boneIndex)) {
-            return result;
+            logger.warn("Bone " + boneIndex + " is unknown");
         }
 
         Record recordRotationX = new Record();
@@ -302,8 +306,9 @@ public class RawMotionToMotionConverter {
         try {
             angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
         } catch (CardanEulerSingularityException e) {
-            rotation = new Rotation(source.getW(), source.getX() - 0.01, source.getY() - 0.01, source.getZ() - 0.01, true); //solution is highly questionable and better be replaced
+            rotation = new Rotation(source.getW(), source.getX() - 0.001, source.getY() - 0.001, source.getZ() - 0.001, true); //solution is highly questionable and better be replaced
             angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
+            logger.warn("Rotation: w" + source.getW() + " x" + source.getX() + " y" + source.getY() + " z" + source.getZ() + " cannot be represented as cardan angles\nactual rotation will be slightly different");
         }
         return new Vector3D(angles[0], angles[1], angles[2] * -1);
     }
