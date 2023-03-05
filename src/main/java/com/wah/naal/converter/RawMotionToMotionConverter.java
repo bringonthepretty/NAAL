@@ -1,6 +1,5 @@
 package com.wah.naal.converter;
 
-import com.wah.naal.io.FileIO;
 import com.wah.naal.model.motionfile.motion.Motion;
 import com.wah.naal.model.motionfile.record.Record;
 import com.wah.naal.model.motionfile.value.api.Value;
@@ -162,7 +161,7 @@ public class RawMotionToMotionConverter {
         try {
             boneIndex = Integer.parseInt(bone.getName().replace("bone", ""));
         } catch (NumberFormatException e){
-            logger.warn("Bone name " + bone.getName() + " is invalid");
+            logger.warn("Bone name " + bone.getName() + " is invalid and bone will be ignored");
             return result;
         }
 
@@ -314,6 +313,6 @@ public class RawMotionToMotionConverter {
             angles = rotation.getAngles(RotationOrder.XYZ, RotationConvention.VECTOR_OPERATOR);
             logger.warn("Rotation: w" + source.getW() + " x" + source.getX() + " y" + source.getY() + " z" + source.getZ() + " cannot be represented as cardan angles\nactual rotation will be slightly different");
         }
-        return new Vector3D(angles[0], angles[1], angles[2] * -1);
+        return new Vector3D(angles[0] * -1, angles[1] * -1, angles[2] * -1);
     }
 }
