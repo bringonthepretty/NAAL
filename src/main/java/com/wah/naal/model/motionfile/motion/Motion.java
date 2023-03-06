@@ -1,6 +1,5 @@
 package com.wah.naal.model.motionfile.motion;
 
-import com.wah.naal.utils.HexStringUtils;
 import com.wah.naal.exception.ParseException;
 import com.wah.naal.model.motionfile.record.Record;
 
@@ -119,44 +118,6 @@ public final class Motion {
 
     public void setRecords(List<Record> records) {
         this.records = records;
-    }
-
-    public String toStringAsHex() {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder
-                .append("Motion{")
-                .append("\n")
-                .append("fileDescription='")
-                .append(fileDescription)
-                .append('\'')
-                .append("\n")
-                .append("unknown1=")
-                .append(HexStringUtils.toHexString(unknown1, 4))
-                .append("\n")
-                .append("flags=")
-                .append(HexStringUtils.toHexString(flags, 2))
-                .append("\n")
-                .append("frameCount=")
-                .append(HexStringUtils.toHexString(frameCount, 2))
-                .append("\n")
-                .append("recordsOffset=")
-                .append(HexStringUtils.toHexString(recordsOffset, 4))
-                .append("\n")
-                .append("recordsCount=")
-                .append(HexStringUtils.toHexString(recordsCount, 4))
-                .append("\n")
-                .append("unknown2=")
-                .append(HexStringUtils.toHexString(unknown2, 4))
-                .append("\n")
-                .append("motionName='")
-                .append(motionName)
-                .append('\'')
-                .append("\n")
-                .append("records=")
-                .append("\n");
-        records.forEach((record) -> stringBuilder.append(record).append("\n"));
-        stringBuilder.append("}");
-        return stringBuilder.toString();
     }
 
     @Override
